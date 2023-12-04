@@ -269,6 +269,7 @@ function RangerPicker<DateType>() {
       const startInputRef = ref<HTMLInputElement>(null);
       const endInputRef = ref<HTMLInputElement>(null);
       const arrowRef = ref<HTMLDivElement>(null);
+      const sAndeInput = ref<0 | 1>(0);
 
       // ============================ Warning ============================
       if (process.env.NODE_ENV !== 'production') {
@@ -473,15 +474,16 @@ function RangerPicker<DateType>() {
       function triggerOpenAndFocus(index: 0 | 1) {
         triggerOpen(true, index);
         // Use setTimeout to make sure panel DOM exists
-        setTimeout(() => {
-          const inputRef = [startInputRef, endInputRef][index];
-          if (inputRef.value) {
-            inputRef.value.focus();
-          }
-        }, 0);
+        // setTimeout(() => {
+        //   const inputRef = [startInputRef, endInputRef][index];
+        //   if (inputRef.value) {
+        //     inputRef.value.focus();
+        //   }
+        // }, 0);
       }
 
       function triggerChange(newValue: RangeValue<DateType>, sourceIndex: 0 | 1) {
+        console.log(sourceIndex, 'sourceIndex');
         let values = newValue;
         let startValue = getValue(values, 0);
         let endValue = getValue(values, 1);
@@ -618,12 +620,12 @@ function RangerPicker<DateType>() {
         locale: toRef(props, 'locale'),
       };
 
-      const [startValueTexts, firstStartValueText] = useValueTexts<DateType>(
+      const [startValueTexts] = useValueTexts<DateType>(
         computed(() => getValue(selectedValue.value, 0)),
         sharedTextHooksProps,
       );
 
-      const [endValueTexts, firstEndValueText] = useValueTexts<DateType>(
+      const [endValueTexts] = useValueTexts<DateType>(
         computed(() => getValue(selectedValue.value, 1)),
         sharedTextHooksProps,
       );
@@ -744,6 +746,16 @@ function RangerPicker<DateType>() {
       const onPickerClick = (e: MouseEvent) => {
         // When click inside the picker & outside the picker's input elements
         // the panel should still be opened
+        if (startInputRef.value.contains(e.target as Node)) {
+          sAndeInput.value = 0;
+          setViewDate(getValue(selectedValue.value, 0), 0);
+        } else if (endInputRef.value.contains(e.target as Node)) {
+          sAndeInput.value = 1;
+          setViewDate(getValue(selectedValue.value, 1), 1);
+        } else {
+          sAndeInput.value = 0;
+          setViewDate(getValue(selectedValue.value, 0), 0);
+        }
         props.onClick?.(e);
         if (
           !mergedOpen.value &&
@@ -792,22 +804,22 @@ function RangerPicker<DateType>() {
           : '',
       );
 
-      watch([mergedOpen, startValueTexts, endValueTexts], () => {
-        if (!mergedOpen.value) {
-          setSelectedValue(mergedValue.value);
+      // watch([mergedOpen, startValueTexts, endValueTexts], () => {
+      //   if (!mergedOpen.value) {
+      //     setSelectedValue(mergedValue.value);
 
-          if (!startValueTexts.value.length || startValueTexts.value[0] === '') {
-            triggerStartTextChange('');
-          } else if (firstStartValueText.value !== startText.value) {
-            resetStartText();
-          }
-          if (!endValueTexts.value.length || endValueTexts.value[0] === '') {
-            triggerEndTextChange('');
-          } else if (firstEndValueText.value !== endText.value) {
-            resetEndText();
-          }
-        }
-      });
+      //     if (!startValueTexts.value.length || startValueTexts.value[0] === '') {
+      //       triggerStartTextChange('');
+      //     } else if (firstStartValueText.value !== startText.value) {
+      //       resetStartText();
+      //     }
+      //     if (!endValueTexts.value.length || endValueTexts.value[0] === '') {
+      //       triggerEndTextChange('');
+      //     } else if (firstEndValueText.value !== endText.value) {
+      //       resetEndText();
+      //     }
+      //   }
+      // });
 
       // Sync innerValue with control mode
       watch([startStr, endStr], () => {
@@ -866,8 +878,7 @@ function RangerPicker<DateType>() {
         panelPosition: 'left' | 'right' | false = false,
         panelProps: Partial<PickerPanelProps<DateType>> = {},
       ) {
-        const { generateConfig, showTime, dateRender, direction, disabledTime, prefixCls, locale } =
-          props;
+        const { generateConfig, showTime, dateRender, direction, disabledTime, locale } = props;
 
         let panelShowTime: boolean | SharedTimeProps<DateType> | undefined =
           showTime as SharedTimeProps<DateType>;
@@ -918,10 +929,10 @@ function RangerPicker<DateType>() {
                 }
                 return false;
               }}
-              class={classNames({
-                [`${prefixCls}-panel-focused`]:
-                  mergedActivePickerIndex.value === 0 ? !startTyping.value : !endTyping.value,
-              })}
+              // class={classNames({
+              //   [`${prefixCls}-panel-focused`]:
+              //     mergedActivePickerIndex.value === 0 ? !startTyping.value : !endTyping.value,
+              // })}
               value={getValue(selectedValue.value, mergedActivePickerIndex.value)}
               locale={locale}
               tabIndex={-1}
@@ -945,7 +956,12 @@ function RangerPicker<DateType>() {
                 ) {
                   viewDate = getClosingViewDate(viewDate, newMode as any, generateConfig, -1);
                 }
-                setViewDate(viewDate, mergedActivePickerIndex.value);
+                if (panelPosition === 'left') {
+                  sAndeInput.value = 0;
+                } else {
+                  sAndeInput.value = 1;
+                }
+                setViewDate(viewDate, sAndeInput.value);
               }}
               onOk={null}
               onSelect={undefined}
@@ -1052,8 +1068,9 @@ function RangerPicker<DateType>() {
           });
 
           if (picker !== 'time' && !showTime) {
-            const viewDate =
-              mergedActivePickerIndex.value === 0 ? startViewDate.value : endViewDate.value;
+            let viewDate =
+              mergedActivePickerIndex.value === 0 ? startViewDate.value : startViewDate.value;
+            viewDate = sAndeInput.value === 0 ? startViewDate.value : endViewDate.value;
             const nextViewDate = getClosingViewDate(viewDate, picker, generateConfig);
             const currentMode = mergedModes.value[mergedActivePickerIndex.value];
 
@@ -1190,18 +1207,18 @@ function RangerPicker<DateType>() {
           size: getInputSize(picker, formatList.value[0], generateConfig),
         };
 
-        let activeBarLeft = 0;
-        let activeBarWidth = 0;
-        if (startInputDivRef.value && endInputDivRef.value && separatorRef.value) {
-          if (mergedActivePickerIndex.value === 0) {
-            activeBarWidth = startInputDivRef.value.offsetWidth;
-          } else {
-            activeBarLeft = arrowLeft.value;
-            activeBarWidth = endInputDivRef.value.offsetWidth;
-          }
-        }
-        const activeBarPositionStyle =
-          direction === 'rtl' ? { right: `${activeBarLeft}px` } : { left: `${activeBarLeft}px` };
+        // let activeBarLeft = 0;
+        // let activeBarWidth = 0;
+        // if (startInputDivRef.value && endInputDivRef.value && separatorRef.value) {
+        //   if (mergedActivePickerIndex.value === 0) {
+        //     activeBarWidth = startInputDivRef.value.offsetWidth;
+        //   } else {
+        //     activeBarLeft = arrowLeft.value;
+        //     activeBarWidth = endInputDivRef.value.offsetWidth;
+        //   }
+        // }
+        // const activeBarPositionStyle =
+        //   direction === 'rtl' ? { right: `${activeBarLeft}px` } : { left: `${activeBarLeft}px` };
         // ============================ Return =============================
 
         return (
@@ -1273,12 +1290,12 @@ function RangerPicker<DateType>() {
               />
             </div>
             <div
-              class={`${prefixCls}-active-bar`}
-              style={{
-                ...activeBarPositionStyle,
-                width: `${activeBarWidth}px`,
-                position: 'absolute',
-              }}
+            // class={`${prefixCls}-active-bar`}
+            // style={{
+            //   ...activeBarPositionStyle,
+            //   width: `${activeBarWidth}px`,
+            //   position: 'absolute',
+            // }}
             />
             {suffixNode}
             {clearNode}
