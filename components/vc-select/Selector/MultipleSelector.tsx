@@ -11,6 +11,7 @@ import Overflow from '../../vc-overflow';
 import type { DisplayValueType, RenderNode, CustomTagProps, RawValueType } from '../BaseSelect';
 import type { BaseOptionType } from '../Select';
 import useInjectLegacySelectContext from '../../vc-tree-select/LegacyContext';
+import DownOutlined from '@ant-design/icons-vue/DownOutlined';
 
 type SelectorProps = InnerSelectorProps & {
   // Icon
@@ -280,6 +281,7 @@ const SelectSelector = defineComponent<SelectorProps>({
           {!values.length && !inputValue.value && (
             <span class={`${selectionPrefixCls.value}-placeholder`}>{placeholder}</span>
           )}
+          {<DownOutlined class={classNames(`${prefixCls}-arrow`)} />}
         </>
       );
     };

@@ -268,7 +268,6 @@ function RangerPicker<DateType>() {
       const separatorRef = ref<HTMLDivElement>(null);
       const startInputRef = ref<HTMLInputElement>(null);
       const endInputRef = ref<HTMLInputElement>(null);
-      const arrowRef = ref<HTMLDivElement>(null);
       const sAndeInput = ref<0 | 1>(0);
 
       // ============================ Warning ============================
@@ -393,7 +392,6 @@ function RangerPicker<DateType>() {
       const startOpen = computed(() => mergedOpen.value && mergedActivePickerIndex.value === 0);
       const endOpen = computed(() => mergedOpen.value && mergedActivePickerIndex.value === 1);
       const panelLeft = ref(0);
-      const arrowLeft = ref(0);
       // ============================= Popup =============================
       // Popup min width
       const popupMinWidth = ref(0);
@@ -403,44 +401,6 @@ function RangerPicker<DateType>() {
           popupMinWidth.value = containerWidth.value;
         }
       });
-      const { width: panelDivWidth } = useElementSize(panelDivRef);
-      const { width: arrowWidth } = useElementSize(arrowRef);
-      const { width: startInputDivWidth } = useElementSize(startInputDivRef);
-      const { width: separatorWidth } = useElementSize(separatorRef);
-      watch(
-        [
-          mergedActivePickerIndex,
-          mergedOpen,
-          panelDivWidth,
-          arrowWidth,
-          startInputDivWidth,
-          separatorWidth,
-          () => props.direction,
-        ],
-        () => {
-          arrowLeft.value = 0;
-          if (mergedOpen.value && mergedActivePickerIndex.value) {
-            if (startInputDivRef.value && separatorRef.value && panelDivRef.value) {
-              arrowLeft.value = startInputDivWidth.value + separatorWidth.value;
-              if (
-                panelDivWidth.value &&
-                arrowWidth.value &&
-                arrowLeft.value >
-                  panelDivWidth.value -
-                    arrowWidth.value -
-                    (props.direction === 'rtl' || arrowRef.value.offsetLeft > arrowLeft.value
-                      ? 0
-                      : arrowRef.value.offsetLeft)
-              ) {
-                panelLeft.value = arrowLeft.value;
-              }
-            }
-          } else if (mergedActivePickerIndex.value === 0) {
-            panelLeft.value = 0;
-          }
-        },
-        { immediate: true },
-      );
 
       // ============================ Trigger ============================
       const triggerRef = ref<any>();
@@ -483,7 +443,6 @@ function RangerPicker<DateType>() {
       }
 
       function triggerChange(newValue: RangeValue<DateType>, sourceIndex: 0 | 1) {
-        console.log(sourceIndex, 'sourceIndex');
         let values = newValue;
         let startValue = getValue(values, 0);
         let endValue = getValue(values, 1);
@@ -1035,11 +994,6 @@ function RangerPicker<DateType>() {
           autocomplete = 'off',
         } = props;
 
-        const arrowPositionStyle =
-          direction === 'rtl'
-            ? { right: `${arrowLeft.value}px` }
-            : { left: `${arrowLeft.value}px` };
-
         function renderPanels() {
           let panels: VueNode;
           const extraNode = getExtraFooter(
@@ -1158,7 +1112,7 @@ function RangerPicker<DateType>() {
             class={classNames(`${prefixCls}-range-wrapper`, `${prefixCls}-${picker}-range-wrapper`)}
             style={{ minWidth: `${popupMinWidth.value}px` }}
           >
-            <div ref={arrowRef} class={`${prefixCls}-range-arrow`} style={arrowPositionStyle} />
+            <div class={`${prefixCls}-range-arrow`} style={{ left: 0 }} />
             {renderPanels()}
           </div>
         );
@@ -1206,19 +1160,6 @@ function RangerPicker<DateType>() {
         const inputSharedProps = {
           size: getInputSize(picker, formatList.value[0], generateConfig),
         };
-
-        // let activeBarLeft = 0;
-        // let activeBarWidth = 0;
-        // if (startInputDivRef.value && endInputDivRef.value && separatorRef.value) {
-        //   if (mergedActivePickerIndex.value === 0) {
-        //     activeBarWidth = startInputDivRef.value.offsetWidth;
-        //   } else {
-        //     activeBarLeft = arrowLeft.value;
-        //     activeBarWidth = endInputDivRef.value.offsetWidth;
-        //   }
-        // }
-        // const activeBarPositionStyle =
-        //   direction === 'rtl' ? { right: `${activeBarLeft}px` } : { left: `${activeBarLeft}px` };
         // ============================ Return =============================
 
         return (

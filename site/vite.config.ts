@@ -17,6 +17,7 @@ export default {
   },
   server: {
     host: true,
+    port: 9999,
   },
   plugins: [
     vueJsx({
